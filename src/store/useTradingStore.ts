@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-
-export type BotType = 'Hunter' | 'Hard-Trader' | 'Risk-Manager';
+import { TradeProposal, BotEvent, TradeHistory, TransactionHistory } from '../types/trading'; export type BotType = 'Hunter' | 'Hard-Trader' | 'Risk-Manager';
 export type BotState = 'Running' | 'Stopped' | 'Error';
 
 export interface Bot {
@@ -37,6 +36,20 @@ interface TradingState {
 
     apiKeyConfigured: boolean;
     setApiKeyConfigured: (val: boolean) => void;
+
+    // Nuevos estados para el ecosistema de bots:
+    proposals: TradeProposal[];
+    addProposal: (proposal: TradeProposal) => void;
+    updateProposalStatus: (id: string, status: TradeProposal['status'], riskReasoning?: string) => void;
+
+    botEvents: BotEvent[];
+    addBotEvent: (event: BotEvent) => void;
+
+    tradeHistory: TradeHistory[];
+    addTrade: (trade: TradeHistory) => void;
+
+    transactions: TransactionHistory[];
+    addTransaction: (tx: TransactionHistory) => void;
 }
 
 export const useTradingStore = create<TradingState>((set, get) => ({
@@ -81,5 +94,30 @@ export const useTradingStore = create<TradingState>((set, get) => ({
     })),
 
     apiKeyConfigured: false,
-    setApiKeyConfigured: (val) => set({ apiKeyConfigured: val })
+    setApiKeyConfigured: (val) => set({ apiKeyConfigured: val }),
+
+    proposals: [],
+    addProposal: (proposal) => set((state) => ({
+        proposals: [proposal, ...state.proposals]
+    })),
+    updateProposalStatus: (id, status, riskReasoning) => set((state) => ({
+        proposals: state.proposals.map(p =>
+            p.id === id ? { ...p, status, riskReasoning } : p
+        )
+    })),
+
+    botEvents: [],
+    addBotEvent: (event) => set((state) => ({
+        botEvents: [event, ...state.botEvents].slice(0, 100) // Mantener últimos 100 eventos
+    })),
+
+    tradeHistory: [],
+    addTrade: (trade) => set((state) => ({
+        tradeHistory: [trade, ...state.tradeHistory]
+    })),
+
+    transactions: [],
+    addTransaction: (tx) => set((state) => ({
+        transactions: [tx, ...state.transactions]
+    }))
 }));
